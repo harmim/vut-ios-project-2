@@ -6,7 +6,7 @@ CFLAGS = -std=gnu99 -Wall -Wextra -Werror -pedantic
 LDLIBS = -lpthread
 
 EXECUTABLE = proj2
-OBJS = $(wildcard *.o)
+OBJS = $(shell $(CC) -MM *.c | cut -d ':' -f1 | tr '\n' ' ')
 PACK = $(EXECUTABLE).zip
 
 
@@ -20,7 +20,8 @@ $(EXECUTABLE): $(OBJS)
 
 
 # generated dependencies by gcc, see target dependencies
-proj2.o: proj2.c
+argument_processor.o: argument_processor.c argument_processor.h
+proj2.o: proj2.c argument_processor.h
 
 
 dependencies:

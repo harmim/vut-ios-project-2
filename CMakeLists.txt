@@ -6,7 +6,7 @@ PROJECT(proj2)
 
 SET(CMAKE_C_COMPILER gcc)
 SET(CMAKE_C_FLAGS_RELEASE "-std=gnu99 -Wall -Wextra -Werror -pedantic")
-SET(CMAKE_C_FLAGS_DEBUG "-std=gnu99 -Werror")
+SET(CMAKE_C_FLAGS_DEBUG "-std=gnu99 -Werror -g")
 SET(CMAKE_EXE_LINKER_FLAGS "-lpthread")
 
 FILE(GLOB HEADERS ".*.h")
