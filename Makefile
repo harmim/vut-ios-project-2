@@ -40,7 +40,7 @@ pack:
 
 
 clean:
-	rm -f $(EXECUTABLE) *.o $(PACK)
+	rm -f $(EXECUTABLE) *.o *.out $(PACK)
 
 clean_res: scripts/clean.sh
 	chmod +x $<
