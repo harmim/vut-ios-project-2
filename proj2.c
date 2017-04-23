@@ -7,12 +7,19 @@
  */
 
 
-#include "stdlib.h"
-#include "stdio.h"
-#include "stdbool.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include <stdbool.h>
+#include <time.h>
+#include <signal.h>
 #include "argument_processor.h"
+#include "resources.h"
+#include "adult_generator.h"
+#include "child_generator.h"
 
 #define EXPECTED_ARGUMENTS_COUNT 6 /// Expected number of program arguments.
+#define EXIT_FAILURE_SYS_CALL 2 /// System call exit code.
+#define SYS_CALL_ERROR_MESSAGE "System call error"
 
 
 /// Usage string (help).
@@ -101,16 +108,16 @@ void set_expected_arguments(struct expected_arguments *expected)
  * @param argc Number of arguments.
  * @param argv Argument values.
  * @param arguments Output arguments sctructure.
- * @return True, if getting was seccessful, false otherwise.
+ * @return 0 if getting was seccessful, error code otherwise.
  */
-bool get_arguments(int argc, char *argv[], struct argument *arguments[])
+int get_arguments(int argc, char *argv[], struct argument *arguments[])
 {
 	// inicialization of expected arguments structure
 	struct expected_arguments expected_args;
 	if ( ! init_expected_arguments(&expected_args, EXPECTED_ARGUMENTS_COUNT)) {
-		perror(NULL);
+		perror(SYS_CALL_ERROR_MESSAGE);
 
-		return false;
+		return EXIT_FAILURE_SYS_CALL;
 	}
 
 	// setting expected arguments
@@ -118,14 +125,16 @@ bool get_arguments(int argc, char *argv[], struct argument *arguments[])
 	// process arguments
 	if ( ! process_arguments(argc, argv, arguments, &expected_args)) {
 		fprintf(stderr, USAGE_STRING);
+		// cleare expected arguments structure
+		clear_expected_arguments(&expected_args);
 
-		return false;
+		return EXIT_FAILURE;
 	}
 
 	// cleare expected arguments structure
 	clear_expected_arguments(&expected_args);
 
-	return true;
+	return EXIT_SUCCESS;
 }
 
 
@@ -138,20 +147,68 @@ bool get_arguments(int argc, char *argv[], struct argument *arguments[])
  */
 int main(int argc, char *argv[])
 {
+	/****************** Processing arguments ******************/
 	// inicialization of input arguments structure
 	struct argument *arguments;
 	if ( ! init_arguments(&arguments, EXPECTED_ARGUMENTS_COUNT)) {
-		perror(NULL);
+		perror(SYS_CALL_ERROR_MESSAGE);
 
-		return EXIT_FAILURE;
+		return EXIT_FAILURE_SYS_CALL;
 	}
 	// get arguments
-	if ( ! get_arguments(argc, argv, &arguments)) {
-		return EXIT_FAILURE;
+	int error_code = get_arguments(argc, argv, &arguments);
+	if (error_code) {
+		clear_arguments(&arguments); // clear input arguments structure
+
+		return error_code;
+	}
+	int arg_a = arguments[0].value.i_value,
+		arg_c = arguments[1].value.i_value,
+		arg_agt = arguments[2].value.i_value,
+		arg_cgt = arguments[3].value.i_value,
+		arg_awt = arguments[4].value.i_value,
+		arg_cwt = arguments[5].value.i_value;
+	clear_arguments(&arguments); // clear input arguments structure
+
+
+	/****************** Inicialize ******************/
+	// disable output buffering
+	setbuf(stdout, NULL);
+	setbuf(stderr, NULL);
+	srandom((unsigned) time(NULL)); // initialize random number generator
+	if ( ! set_resources(arg_a + arg_c)) {
+		perror(SYS_CALL_ERROR_MESSAGE);
+		clean_resources();
+
+		return EXIT_FAILURE_SYS_CALL;
 	}
 
-	// clear input arguments structure
-	clear_arguments(&arguments);
+
+	/****************** Process generating ******************/
+	pid_t adult_pid, child_pid = -1;
+	if (
+		(adult_pid = adult_generator_start(arg_a, arg_agt, arg_awt)) < 0
+		|| (child_pid = child_generator_start(arg_c, arg_cgt, arg_cwt, arg_a)) < 0
+	) {
+		perror(SYS_CALL_ERROR_MESSAGE);
+		kill(adult_pid, SIGTERM);
+		if (child_pid != -1) {
+			kill(child_pid, SIGTERM);
+		}
+		clean_resources();
+
+		return EXIT_FAILURE_SYS_CALL;
+	}
+
+
+	/****************** Waiting for exit processes ******************/
+	waitpid(adult_pid, NULL, 0);
+	waitpid(child_pid, NULL, 0);
+
+
+	/****************** Clear resources ******************/
+	clean_resources();
+
 
 	return EXIT_SUCCESS;
 }

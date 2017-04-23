@@ -14,6 +14,9 @@ fi
 IPCS_S=`ipcs -s | egrep "0x[0-9a-f]+ [0-9]+" | grep $ME | cut -f2 -d" "`
 IPCS_M=`ipcs -m | egrep "0x[0-9a-f]+ [0-9]+" | grep $ME | cut -f2 -d" "`
 IPCS_Q=`ipcs -q | egrep "0x[0-9a-f]+ [0-9]+" | grep $ME | cut -f2 -d" "`
+#IPCS_S=`ipcs -s | grep $ME | cut -f2 -d" "`
+#IPCS_M=`ipcs -m | grep $ME | cut -f2 -d" "`
+#IPCS_Q=`ipcs -q | grep $ME | cut -f2 -d" "`
 
 IPCS_S_COUNT=`echo -n "$IPCS_S" | wc -l`
 IPCS_M_COUNT=`echo -n "$IPCS_M" | wc -l`

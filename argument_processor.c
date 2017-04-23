@@ -7,12 +7,12 @@
 
 
 #include "argument_processor.h"
-#include "stdlib.h"
+#include <stdlib.h>
 
 
 bool init_arguments(struct argument *arguments[], int count)
 {
-	if ( ! (*arguments = malloc(count * sizeof(struct argument)))) {
+	if ( ! (*arguments = malloc(count * sizeof (struct argument)))) {
 		return false;
 	}
 
@@ -29,7 +29,7 @@ void clear_arguments(struct argument *arguments[])
 bool init_expected_arguments(struct expected_arguments *expected, int count)
 {
 	expected->count = count;
-	if ( ! (expected->args = malloc(count * sizeof(struct expected_argument)))) {
+	if ( ! (expected->args = malloc(count * sizeof (struct expected_argument)))) {
 		return false;
 	}
 
