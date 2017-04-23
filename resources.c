@@ -8,6 +8,7 @@
 
 #include <stdlib.h>
 #include <sys/shm.h>
+#include <sys/fcntl.h>
 #include "resources.h"
 
 

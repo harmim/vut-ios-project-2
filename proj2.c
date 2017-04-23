@@ -12,6 +12,7 @@
 #include <stdbool.h>
 #include <time.h>
 #include <signal.h>
+#include <sys/wait.h>
 #include "argument_processor.h"
 #include "resources.h"
 #include "adult_generator.h"
