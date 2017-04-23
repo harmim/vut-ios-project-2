@@ -12,6 +12,7 @@
 
 #include <stdbool.h>
 #include <semaphore.h>
+#include <stdio.h>
 
 #define MUTEX_NAME "/xharmi00-ios2-mutex"
 #define CHILD_QUEUE_NAME "/xharmi00-ios2-childq"
@@ -19,6 +20,7 @@
 #define FINISHED_BARRIER "/xharmi00-ios2-fbarr"
 #define PRINT_FORMAT "%-6i : %c %-4i : %s\n"
 #define PRINT_FORMAT_WAITING "%-6i : %c %-4i : %s : %i : %i\n"
+#define OUTPUT_FILE_NAME "proj2.out"
 
 
 extern sem_t *mutex,
@@ -49,6 +51,9 @@ extern int *current_adult_count,
 
 extern int *working_counter,
 			working_counter_id;
+
+extern FILE *output_file;
+extern int output_file_id;
 
 
 bool set_resources(int processes_count);

@@ -41,6 +41,9 @@ int *current_child_count = NULL,
 int *current_adult_count = NULL,
 	current_adult_count_id = 0;
 
+FILE *output_file = NULL;
+int output_file_id = 0;
+
 
 static bool set_semaphore(sem_t **sem, char *name, int value)
 {
@@ -106,6 +109,18 @@ bool set_resources(int processes_count)
 		return false;
 	}
 
+	if ((output_file_id = shmget(IPC_PRIVATE, sizeof (FILE), IPC_CREAT | 0666)) == -1) {
+		return false;
+	}
+	if ((output_file = (FILE *) shmat(output_file_id, NULL, 0)) == NULL) {
+		return false;
+	}
+	output_file = fopen(OUTPUT_FILE_NAME, "w");
+	if ( ! output_file) {
+		return false;
+	}
+	setbuf(output_file, NULL); // disable output buffering
+
 	return true;
 }
 
@@ -138,4 +153,7 @@ void clean_resources()
 	clean_shm(working_counter_id);
 	clean_shm(current_child_count_id);
 	clean_shm(current_adult_count_id);
+
+	clean_shm(output_file_id);
+	fclose(output_file);
 }

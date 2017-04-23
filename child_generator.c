@@ -18,22 +18,22 @@
 static void child_process(int wait_time, int adult_count)
 {
 	sem_wait(mutex);
-	printf(PRINT_FORMAT, ++(*action_counter), 'C', *child_counter + 1, "started");
+	fprintf(output_file, PRINT_FORMAT, ++(*action_counter), 'C', *child_counter + 1, "started");
 
 	if (*current_child_count < 3 * (*current_adult_count) || adult_count == *adult_counter) {
 		(*child_counter)++;
 		(*current_child_count)++;
-		printf(PRINT_FORMAT, ++(*action_counter), 'C', *child_counter, "enter");
+		fprintf(output_file, PRINT_FORMAT, ++(*action_counter), 'C', *child_counter, "enter");
 		sem_post(mutex);
 	} else {
 		(*child_waiting)++;
 		int ca = *adult_counter, cc = *child_counter + 1;
-		printf(PRINT_FORMAT_WAITING, ++(*action_counter), 'C', cc, "waiting", ca, cc);
+		fprintf(output_file, PRINT_FORMAT_WAITING, ++(*action_counter), 'C', cc, "waiting", ca, cc);
 		sem_post(mutex);
 		sem_wait(child_queue);
 
 		sem_wait(mutex);
-		printf(PRINT_FORMAT, ++(*action_counter), 'C', *child_counter, "enter");
+		fprintf(output_file, PRINT_FORMAT, ++(*action_counter), 'C', *child_counter, "enter");
 		sem_post(mutex);
 	}
 
@@ -44,8 +44,8 @@ static void child_process(int wait_time, int adult_count)
 
 
 	sem_wait(mutex);
-	printf(PRINT_FORMAT, ++(*action_counter), 'C', *child_counter, "trying to leave");
-	printf(PRINT_FORMAT, ++(*action_counter), 'C', *child_counter, "leave");
+	fprintf(output_file, PRINT_FORMAT, ++(*action_counter), 'C', *child_counter, "trying to leave");
+	fprintf(output_file, PRINT_FORMAT, ++(*action_counter), 'C', *child_counter, "leave");
 
 	(*current_child_count)--;
 	if (*adult_waiting && *current_child_count <= 3 * ((*current_adult_count) - 1)) {
@@ -64,7 +64,7 @@ static void child_process(int wait_time, int adult_count)
 	sem_post(finished_barrier);
 
 	sem_wait(mutex);
-	printf(PRINT_FORMAT, ++(*action_counter), 'C', *child_counter, "finished");
+	fprintf(output_file, PRINT_FORMAT, ++(*action_counter), 'C', *child_counter, "finished");
 	sem_post(mutex);
 
 	exit(0);
