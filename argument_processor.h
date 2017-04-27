@@ -2,7 +2,7 @@
  * @file argument_processor.h
  * @brief Argument processor interface.
  * @author Dominik Harmim <xharmi00@stud.fit.vutbr.cz>
- * @date 22.4.2017
+ * @date 28.4.2017
  */
 
 
@@ -68,11 +68,11 @@ bool init_arguments(struct argument *arguments[], int count);
 
 
 /**
- * Clear collection of structs for arguments.
+ * Clean collection of structs for arguments.
  *
  * @param arguments Collection for structs to clear.
  */
-void clear_arguments(struct argument *arguments[]);
+void clean_arguments(struct argument *arguments[]);
 
 
 /**
@@ -87,11 +87,11 @@ bool init_expected_arguments(struct expected_arguments *expected, int count);
 
 
 /**
- * Clear struct for collection of expected arguments.
+ * Clean struct for collection of expected arguments.
  *
- * @param expected Struct for collection of expected arguments to clear.
+ * @param expected Struct for collection of expected arguments to clean.
  */
-void clear_expected_arguments(struct expected_arguments *expected);
+void clean_expected_arguments(struct expected_arguments *expected);
 
 
 /**

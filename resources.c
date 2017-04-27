@@ -1,53 +1,32 @@
 /**
  * @file resources.c
- * @brief Resources implementation.
+ * @brief Global resources implementation.
  * @author Dominik Harmim <xharmi00@stud.fit.vutbr.cz>
- * @date 22.4.2017
+ * @date 28.4.2017
  */
 
 
 #include <stdlib.h>
 #include <sys/shm.h>
+#include <sys/ipc.h>
 #include <sys/fcntl.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include "resources.h"
 
 
-sem_t *mutex,
-	*child_queue,
-	*adult_queue,
-	*finished_barrier;
-
-int *action_counter = NULL,
-	action_counter_id = 0;
-
-int *child_counter = NULL,
-	child_counter_id = 0;
-
-int *adult_counter = NULL,
-	adult_counter_id = 0;
-
-int *child_waiting = NULL,
-	child_waiting_id = 0;
-
-int *adult_waiting = NULL,
-	adult_waiting_id = 0;
-
-int *working_counter = NULL,
-	working_counter_id = 0;
-
-int *current_child_count = NULL,
-	current_child_count_id = 0;
-
-int *current_adult_count = NULL,
-	current_adult_count_id = 0;
-
-FILE *output_file = NULL;
-int output_file_id = 0;
-
-
+/**
+ * Set semaphore.
+ *
+ * @param sem Pointer to semaphore.
+ * @param name Semaphore name.
+ * @param value Semaphore inicialize value.
+ * @return True if successful, false otherwise.
+ */
 static bool set_semaphore(sem_t **sem, char *name, int value)
 {
-	if ((*sem = sem_open(name, O_CREAT | O_EXCL, 0666, value)) == SEM_FAILED) {
+	if ((*sem = sem_open(name, O_CREAT | O_EXCL, DEFFILEMODE, value)) == SEM_FAILED) {
+		printf("shmget");
 		return false;
 	}
 
@@ -55,15 +34,64 @@ static bool set_semaphore(sem_t **sem, char *name, int value)
 }
 
 
-static bool set_shm(int *id, int **mem, int value)
+/**
+ * Set shared memory.
+ *
+ * @param id Pointer to ID of shared memory.
+ * @param mem Pointer to shared memory.
+ * @param size Size of shared memory.
+ * @return True if successful, false otherwise.
+ */
+static bool set_shm(int *id, void **mem, size_t size)
 {
-	if ((*id = shmget(IPC_PRIVATE, sizeof (int), IPC_CREAT | 0666)) == -1) {
+	if ((*id = shmget(IPC_PRIVATE, size, IPC_CREAT | DEFFILEMODE)) == -1) {
+		printf("shmget");
 		return false;
 	}
-	if ((*mem = (int *) shmat(*id, NULL, 0)) == NULL) {
+	if ((*mem = shmat(*id, NULL, 0)) == NULL) {
+		printf("shmat");
 		return false;
 	}
+
+	return true;
+}
+
+
+/**
+ * Set integer shared memory.
+ *
+ * @param id Pointer to ID of shared memory.
+ * @param mem Pointer to shared memory.
+ * @param value Default value of shared memory.
+ * @return True if successful, false otherwise.
+ */
+static bool set_int_shm(int *id, int **mem, int value)
+{
+	if ( ! set_shm(id, (void **) mem, sizeof (int))) {
+		return false;
+	}
+
+	*mem = (int *) *mem;
 	**mem = value;
+
+	return true;
+}
+
+
+/**
+ * Set FILE shared memory.
+ *
+ * @param id Pointer to ID of shared memory.
+ * @param mem Pointer to shared memory.
+ * @return True if successful, false otherwise.
+ */
+static bool set_file_shm(int *id, FILE **mem)
+{
+	if ( ! set_shm(id, (void **) mem, sizeof (int))) {
+		return false;
+	}
+
+	*mem = (FILE *) *mem;
 
 	return true;
 }
@@ -71,60 +99,66 @@ static bool set_shm(int *id, int **mem, int value)
 
 bool set_resources(int processes_count)
 {
-	if ( ! set_semaphore(&mutex, MUTEX_NAME, 1)) {
+	// semaphores
+	if ( ! set_semaphore(&semaphores.mutex, MUTEX_NAME, 1)) {
 		return false;
 	}
-	if ( ! set_semaphore(&child_queue, CHILD_QUEUE_NAME, 0)) {
+	if ( ! set_semaphore(&semaphores.child_queue, CHILD_QUEUE_NAME, 0)) {
 		return false;
 	}
-	if ( ! set_semaphore(&adult_queue, ADULT_QUEUE_NAME, 0)) {
+	if ( ! set_semaphore(&semaphores.adult_queue, ADULT_QUEUE_NAME, 0)) {
 		return false;
 	}
-	if ( ! set_semaphore(&finished_barrier, FINISHED_BARRIER, 0)) {
-		return false;
-	}
-
-	if ( ! set_shm(&action_counter_id, &action_counter, 0)) {
-		return false;
-	}
-	if ( ! set_shm(&child_counter_id, &child_counter, 0)) {
-		return false;
-	}
-	if ( ! set_shm(&child_waiting_id, &child_waiting, 0)) {
-		return false;
-	}
-	if ( ! set_shm(&adult_counter_id, &adult_counter, 0)) {
-		return false;
-	}
-	if ( ! set_shm(&adult_waiting_id, &adult_waiting, 0)) {
-		return false;
-	}
-	if ( ! set_shm(&working_counter_id, &working_counter, processes_count)) {
-		return false;
-	}
-	if ( ! set_shm(&current_child_count_id, &current_child_count, 0)) {
-		return false;
-	}
-	if ( ! set_shm(&current_adult_count_id, &current_adult_count, 0)) {
+	if ( ! set_semaphore(&semaphores.finished_barrier, FINISHED_BARRIER, 0)) {
 		return false;
 	}
 
-	if ((output_file_id = shmget(IPC_PRIVATE, sizeof (FILE), IPC_CREAT | 0666)) == -1) {
+	// shared memory
+	if ( ! set_int_shm(&shared_vars.action_counter_id, &shared_vars.action_counter, 0)) {
 		return false;
 	}
-	if ((output_file = (FILE *) shmat(output_file_id, NULL, 0)) == NULL) {
+	if ( ! set_int_shm(&shared_vars.child_counter_id, &shared_vars.child_counter, 0)) {
 		return false;
 	}
-	output_file = fopen(OUTPUT_FILE_NAME, "w");
-	if ( ! output_file) {
+	if ( ! set_int_shm(&shared_vars.child_waiting_id, &shared_vars.child_waiting, 0)) {
 		return false;
 	}
-	setbuf(output_file, NULL); // disable output buffering
+	if ( ! set_int_shm(&shared_vars.adult_counter_id, &shared_vars.adult_counter, 0)) {
+		return false;
+	}
+	if ( ! set_int_shm(&shared_vars.adult_waiting_id, &shared_vars.adult_waiting, 0)) {
+		return false;
+	}
+	if ( ! set_int_shm(&shared_vars.working_counter_id, &shared_vars.working_counter, processes_count)) {
+		return false;
+	}
+	if ( ! set_int_shm(&shared_vars.current_child_count_id, &shared_vars.current_child_count, 0)) {
+		return false;
+	}
+	if ( ! set_int_shm(&shared_vars.current_adult_count_id, &shared_vars.current_adult_count, 0)) {
+		return false;
+	}
+	if ( ! set_file_shm(&shared_vars.output_file_id, &shared_vars.output_file)) {
+		return false;
+	}
+
+	// open output file
+	shared_vars.output_file = fopen(OUTPUT_FILE_NAME, "w");
+	if ( ! shared_vars.output_file) {
+		return false;
+	}
+	setbuf(shared_vars.output_file, NULL); // disable output buffering
 
 	return true;
 }
 
 
+/**
+ * Clean semaphores.
+ *
+ * @param sem Semaphore structrue.
+ * @param name Semaphore name.
+ */
 static void clean_semaphore(sem_t *sem, char *name)
 {
 	sem_close(sem);
@@ -132,6 +166,11 @@ static void clean_semaphore(sem_t *sem, char *name)
 }
 
 
+/**
+ * Clean shared memory.
+ *
+ * @param id Shared memory ID.
+ */
 static void clean_shm(int id)
 {
 	shmctl(id, IPC_RMID, NULL);
@@ -140,20 +179,23 @@ static void clean_shm(int id)
 
 void clean_resources()
 {
-	clean_semaphore(mutex, MUTEX_NAME);
-	clean_semaphore(child_queue, CHILD_QUEUE_NAME);
-	clean_semaphore(adult_queue, ADULT_QUEUE_NAME);
-	clean_semaphore(finished_barrier, FINISHED_BARRIER);
+	// semaphores
+	clean_semaphore(semaphores.mutex, MUTEX_NAME);
+	clean_semaphore(semaphores.child_queue, CHILD_QUEUE_NAME);
+	clean_semaphore(semaphores.adult_queue, ADULT_QUEUE_NAME);
+	clean_semaphore(semaphores.finished_barrier, FINISHED_BARRIER);
 
-	clean_shm(action_counter_id);
-	clean_shm(child_counter_id);
-	clean_shm(child_waiting_id);
-	clean_shm(adult_counter_id);
-	clean_shm(adult_waiting_id);
-	clean_shm(working_counter_id);
-	clean_shm(current_child_count_id);
-	clean_shm(current_adult_count_id);
+	// shared memory
+	clean_shm(shared_vars.action_counter_id);
+	clean_shm(shared_vars.child_counter_id);
+	clean_shm(shared_vars.child_waiting_id);
+	clean_shm(shared_vars.adult_counter_id);
+	clean_shm(shared_vars.adult_waiting_id);
+	clean_shm(shared_vars.working_counter_id);
+	clean_shm(shared_vars.current_child_count_id);
+	clean_shm(shared_vars.current_adult_count_id);
+	clean_shm(shared_vars.output_file_id);
 
-	clean_shm(output_file_id);
-	fclose(output_file);
+	// close output file
+	fclose(shared_vars.output_file);
 }

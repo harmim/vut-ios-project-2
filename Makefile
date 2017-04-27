@@ -20,10 +20,9 @@ $(EXECUTABLE): $(OBJS)
 
 
 # generated dependencies by gcc, see target dependencies
-adult_generator.o: adult_generator.c adult_generator.h resources.h
 argument_processor.o: argument_processor.c argument_processor.h
-child_generator.o: child_generator.c child_generator.h resources.h
-proj2.o: proj2.c argument_processor.h resources.h adult_generator.h child_generator.h
+process_generator.o: process_generator.c process_generator.h resources.h
+proj2.o: proj2.c argument_processor.h resources.h process_generator.h
 resources.o: resources.c resources.h
 
 
@@ -32,7 +31,7 @@ dependencies:
 
 
 run: $(EXECUTABLE)
-	./$<
+	./$< $(ARGS)
 
 
 pack:
@@ -42,9 +41,11 @@ pack:
 clean:
 	rm -f $(EXECUTABLE) *.o *.out $(PACK)
 
+
 clean_res: scripts/clean.sh $(EXECUTABLE)
 	chmod +x $<
 	./$< $(EXECUTABLE)
+
 
 test: scripts/check-syntax.sh
 	chmod +x $<

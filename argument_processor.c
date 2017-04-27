@@ -2,12 +2,12 @@
  * @file argument_processor.c
  * @brief Argument processor implementation.
  * @author Dominik Harmim <xharmi00@stud.fit.vutbr.cz>
- * @date 22.4.2017
+ * @date 28.4.2017
  */
 
 
-#include "argument_processor.h"
 #include <stdlib.h>
+#include "argument_processor.h"
 
 
 bool init_arguments(struct argument *arguments[], int count)
@@ -20,7 +20,7 @@ bool init_arguments(struct argument *arguments[], int count)
 }
 
 
-void clear_arguments(struct argument *arguments[])
+void clean_arguments(struct argument *arguments[])
 {
 	free(*arguments);
 }
@@ -37,7 +37,7 @@ bool init_expected_arguments(struct expected_arguments *expected, int count)
 }
 
 
-void clear_expected_arguments(struct expected_arguments *expected)
+void clean_expected_arguments(struct expected_arguments *expected)
 {
 	free(expected->args);
 }
