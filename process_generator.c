@@ -11,6 +11,8 @@
 #include <errno.h>
 #include <unistd.h>
 #include <semaphore.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 #include "process_generator.h"
 #include "resources.h"
 
