@@ -19,8 +19,6 @@
 #define CHILD_QUEUE_NAME "/xharmi00-ios2-childq" /// Semaphore child_queue name.
 #define ADULT_QUEUE_NAME "/xharmi00-ios2-adultq" /// Samaphore adult_queue name.
 #define FINISHED_BARRIER "/xharmi00-ios2-fbarr" /// Samaphore finished_barrier name.
-#define PRINT_FORMAT "%-6i : %c %-4i : %s\n" /// Format string for print action.
-#define PRINT_FORMAT_WAITING "%-6i : %c %-4i : %s : %i : %i\n" /// Format string for print waiting action.
 #define OUTPUT_FILE_NAME "proj2.out" /// Output file name.
 
 

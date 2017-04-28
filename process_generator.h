@@ -13,6 +13,10 @@
 #include <sys/types.h>
 
 
+#define PRINT_FORMAT "%-6i : %c %-4i : %s\n" /// Format string for print action.
+#define PRINT_FORMAT_WAITING "%-6i : %c %-4i : %s : %i : %i\n" /// Format string for print waiting action.
+
+
 /**
  * Action which do each adult process.
  *
@@ -38,7 +42,7 @@ void child_action(int wait_time, int adult_count);
  * @param count Processes to generate count.
  * @param generate_time Max time after which a new process is generated.
  * @param wait_time Max time for which the process simulates activity in the center.
- * @param opposite_count Adult/Child processes total count.
+ * @param adult_count Adult processes total count.
  * @param action Callback to action which do each generated process.
  * @return PID of process which generating child processes or < 0 in case of error.
  */
@@ -46,7 +50,7 @@ pid_t generator_start(
 	int count,
 	int generate_time,
 	int wait_time,
-	int opposite_count,
+	int adult_count,
 	void (*action)(int, int)
 );
 

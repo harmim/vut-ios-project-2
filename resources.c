@@ -26,7 +26,6 @@
 static bool set_semaphore(sem_t **sem, char *name, int value)
 {
 	if ((*sem = sem_open(name, O_CREAT | O_EXCL, DEFFILEMODE, value)) == SEM_FAILED) {
-		printf("shmget");
 		return false;
 	}
 
@@ -45,11 +44,9 @@ static bool set_semaphore(sem_t **sem, char *name, int value)
 static bool set_shm(int *id, void **mem, size_t size)
 {
 	if ((*id = shmget(IPC_PRIVATE, size, IPC_CREAT | DEFFILEMODE)) == -1) {
-		printf("shmget");
 		return false;
 	}
 	if ((*mem = shmat(*id, NULL, 0)) == NULL) {
-		printf("shmat");
 		return false;
 	}
 
@@ -87,7 +84,7 @@ static bool set_int_shm(int *id, int **mem, int value)
  */
 static bool set_file_shm(int *id, FILE **mem)
 {
-	if ( ! set_shm(id, (void **) mem, sizeof (int))) {
+	if ( ! set_shm(id, (void **) mem, sizeof (FILE))) {
 		return false;
 	}
 

@@ -32,6 +32,9 @@ static void wait_random_time(int max)
 
 /**
  * Exit generated process.
+ *
+ * @param process_type Process type (A or C).
+ * @param counter Number of finishing process.
  */
 static void exit_process(char process_type, int counter)
 {
